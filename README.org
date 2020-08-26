@@ -102,16 +102,10 @@ df_3.head()
 | 1986-08-15 00:00:00 |  29.88 | 16.148 | 31.726 |
 
 
-Convert the gate ID to named glacier, and subset to just 2020
++ Convert the gate ID to named glacier, and subset to just 2020
 
 #+BEGIN_SRC jupyter-python
-g = ice.gates() # fetch gate metadata
-
-df_3.rename(columns = {df_3.columns[0]:g.loc[g.index == df_3.columns[0],'Bjork_2015'].values[0],
-                       df_3.columns[1]:g.loc[g.index == df_3.columns[1],'Bjork_2015'].values[0],
-                       df_3.columns[2]:g.loc[g.index == df_3.columns[2],'Bjork_2015'].values[0]},
-            inplace=True)
-
+df_3.rename(inplace=True, columns=dict([(i, str(ds.sel({'gate':i})['name_Bjørk'].values)) for i in df_3.columns]))
 df_3[df_3.index.year >= 2020]
 #+END_SRC
 
