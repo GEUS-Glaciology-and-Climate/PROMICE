@@ -1,0 +1,173 @@
+#+TITLE: README for PROMICE Python package
+
+
+** Quickstart
+:PROPERTIES:
+:header-args:jupyter-python+: :kernel PROMICE :session PROMICE :exports both :results raw drawer
+:END:
+
+*** Ice Discharge
+
+#+BEGIN_SRC jupyter-python
+from promice import ice_discharge as ice
+ds = ice.discharge(resolution="GIS")
+ds.to_dataframe().tail()
+#+END_SRC
+
+#+RESULTS:
+| time                | discharge |    err | coverage |
+|---------------------+-----------+--------+----------|
+| 2020-06-11 00:00:00 |   508.739 | 52.574 |    0.805 |
+| 2020-06-23 00:00:00 |   509.875 | 52.702 |    0.718 |
+| 2020-07-05 00:00:00 |   509.695 | 52.209 |    0.668 |
+| 2020-07-17 00:00:00 |   506.666 | 51.772 |    0.713 |
+| 2020-07-29 00:00:00 |   502.263 | 51.325 |    0.714 |
+
+**** Find the 2020 discharge for the top 3 discharging glaciers
+
+Load an =xarray= dataset of all discharge
+
+#+BEGIN_SRC jupyter-python
+from promice import ice_discharge as ice
+ds = ice.discharge(resolution="gate")
+print(ds)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+<xarray.Dataset>
+Dimensions:        (gate: 267, time: 449)
+Coordinates:
+  ,* time           (time) datetime64[ns] 1986-04-15 1986-05-15 ... 2020-07-29
+  ,* gate           (gate) int64 1 3 4 5 6 7 8 10 ... 350 352 353 354 355 356 357
+Data variables:
+    discharge      (gate, time) float32 ...
+    err            (gate, time) float32 ...
+    coverage       (gate, time) float32 ...
+    mean_x         (gate) int32 ...
+    mean_y         (gate) int32 ...
+    mean_lon       (gate) float32 ...
+    mean_lat       (gate) float32 ...
+    sector         (gate) int32 ...
+    region         (gate) object ...
+    name_Bjørk     (gate) object ...
+    name_Mouginot  (gate) object ...
+Attributes:
+    featureType:      timeSeries
+    title:            Greenland discharge
+    summary:          Greenland discharge per gate
+    keywords:         Greenland; Ice Discharge; Calving; Submarine Melt
+    source:           git commit: b4f3e88
+    creator_name:     Ken Mankoff
+    creator_email:    kdm@geus.dk
+    creator_url:      http://kenmankoff.com
+    institution:      GEUS
+    references:       10.22008/promice/ice_discharge
+    product_version:  [2.]
+#+end_example
+
+#+BEGIN_SRC jupyter-python
+top3 = ds.resample(time='A')\
+         .mean()['discharge']\
+         .to_dataframe()['discharge']\
+         .unstack()\
+         .iloc[-1]\
+         .sort_values(ascending=False)[0:3]
+top3
+#+END_SRC
+
+#+RESULTS:
+: gate
+: 184    34.403828
+: 231    33.083332
+: 190    27.318832
+: Name: 2020-12-31 00:00:00, dtype: float32
+
+#+BEGIN_SRC jupyter-python
+df_3 = ds.sel(gate=top3.index)\
+         .to_dataframe()['discharge']\
+         .unstack()\
+         .T
+
+df_3.head()
+#+END_SRC
+
+#+RESULTS:
+| time                |    184 |    190 |    231 |
+|---------------------+--------+--------+--------|
+| 1986-04-15 00:00:00 | 23.174 | 15.267 | 29.657 |
+| 1986-05-15 00:00:00 |  30.07 | 15.883 | 33.243 |
+| 1986-06-15 00:00:00 | 30.006 | 16.714 |  31.41 |
+| 1986-07-15 00:00:00 | 29.944 |  16.85 | 33.052 |
+| 1986-08-15 00:00:00 |  29.88 | 16.148 | 31.726 |
+
+
+Convert the gate ID to named glacier, and subset to just 2020
+
+#+BEGIN_SRC jupyter-python
+g = ice.gates() # fetch gate metadata
+
+df_3.rename(columns = {df_3.columns[0]:g.loc[g.index == df_3.columns[0],'Bjork_2015'].values[0],
+                       df_3.columns[1]:g.loc[g.index == df_3.columns[1],'Bjork_2015'].values[0],
+                       df_3.columns[2]:g.loc[g.index == df_3.columns[2],'Bjork_2015'].values[0]},
+            inplace=True)
+
+df_3[df_3.index.year >= 2020]
+#+END_SRC
+
+#+RESULTS:
+| time                | Sermeq Kujalleq | Kangerlussuaq Gletsjer | Helheim Gletsjer |
+|---------------------+-----------------+------------------------+------------------|
+| 2020-01-07 00:00:00 |          33.634 |                 27.576 |           34.539 |
+| 2020-01-19 00:00:00 |          31.985 |                 27.881 |           35.381 |
+| 2020-01-31 00:00:00 |          32.437 |                 28.366 |            35.75 |
+| 2020-02-12 00:00:00 |           31.59 |                 27.875 |           35.607 |
+| 2020-02-24 00:00:00 |           31.34 |                 27.171 |           34.838 |
+| 2020-03-07 00:00:00 |          30.864 |                 27.424 |           34.079 |
+| 2020-03-19 00:00:00 |          31.621 |                 27.233 |           34.933 |
+| 2020-03-31 00:00:00 |          30.906 |                 27.475 |           34.075 |
+| 2020-04-12 00:00:00 |          31.651 |                 28.215 |           34.607 |
+| 2020-04-24 00:00:00 |          32.016 |                  28.36 |           34.707 |
+| 2020-05-06 00:00:00 |          32.831 |                 28.084 |           33.565 |
+| 2020-05-18 00:00:00 |          33.953 |                 26.859 |           31.066 |
+| 2020-05-30 00:00:00 |          36.937 |                 26.152 |           30.827 |
+| 2020-06-11 00:00:00 |          39.418 |                 26.638 |           30.756 |
+| 2020-06-23 00:00:00 |          40.401 |                 27.209 |           29.931 |
+| 2020-07-05 00:00:00 |          40.071 |                 26.868 |           29.787 |
+| 2020-07-17 00:00:00 |           39.03 |                 26.578 |           30.313 |
+| 2020-07-29 00:00:00 |          38.584 |                 25.775 |           30.739 |
+
+
+*** Watson River discharge
+#+BEGIN_SRC jupyter-python
+from promice import watson
+df = watson.discharge()
+df['2012-06-01':'2012-06-15']
+#+END_SRC
+
+#+RESULTS:
+| Date                |    Q |  err |
+|---------------------+------+------|
+| 2012-06-01 00:00:00 | 0.17 | 0.04 |
+| 2012-06-02 00:00:00 | 0.21 | 0.05 |
+| 2012-06-03 00:00:00 | 0.26 | 0.06 |
+| 2012-06-04 00:00:00 | 0.29 | 0.06 |
+| 2012-06-05 00:00:00 | 0.33 | 0.07 |
+| 2012-06-06 00:00:00 | 0.38 | 0.07 |
+| 2012-06-07 00:00:00 | 0.42 | 0.08 |
+| 2012-06-08 00:00:00 | 0.45 | 0.09 |
+| 2012-06-09 00:00:00 | 0.49 | 0.09 |
+| 2012-06-10 00:00:00 | 0.53 |  0.1 |
+| 2012-06-11 00:00:00 | 0.56 |  0.1 |
+| 2012-06-12 00:00:00 |  0.6 | 0.11 |
+| 2012-06-13 00:00:00 | 0.63 | 0.11 |
+| 2012-06-14 00:00:00 | 0.67 | 0.12 |
+| 2012-06-15 00:00:00 | 0.71 | 0.12 |
+
+
+
+** Installation
+
+#+BEGIN_SRC bash :results verbatim
+pip install git+https://gitlab.com/mankoff/PROMICE.git
+#+END_SRC
