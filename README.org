@@ -1,12 +1,62 @@
-#+TITLE: README for PROMICE Python package
+#+TITLE: PROMICE - A Python interface to PROMICE data
 
 
-** Quickstart
+* Table of contents                               :toc_3:noexport:
+- [[#warning][WARNING]]
+- [[#installation][Installation]]
+- [[#quickstart][Quickstart]]
+  - [[#ice-discharge][Ice Discharge]]
+    - [[#find-the-2020-discharge-for-the-top-3-discharging-glaciers][Find the 2020 discharge for the top 3 discharging glaciers]]
+  - [[#watson-river-discharge][Watson River discharge]]
+
+* WARNING
+
++ This is alpha level software under development.
++ Please contact Ken Mankoff <kdm@geus.dk> before using.
+
+* Installation
+
+#+BEGIN_SRC bash :results verbatim
+pip install git+https://gitlab.com/mankoff/PROMICE.git
+#+END_SRC
+
+Can be run in new environment, for example:
+
+Conda:
+
+#+BEGIN_SRC bash :results verbatim
+conda create -n PROMICE python=3.8
+conda activate PROMICE
+pip install --upgrade git+https://gitlab.com/mankoff/PROMICE.git
+#+END_SRC
+
+Test the installation
+
+#+BEGIN_SRC bash :results verbatim
+conda activate PROMICE
+python
+#+END_SRC
+
+Then,
+
+#+BEGIN_SRC python :results verbatim  :exports both
+import promice
+promice.ice_discharge.discharge(resolution="GIS").to_dataframe().tail()
+#+END_SRC
+
+#+RESULTS:
+|       time |  discharge |       err | coverage |
+| 2020-06-11 | 508.739014 | 52.574001 |    0.805 |
+| 2020-06-23 | 509.875000 | 52.702000 |    0.718 |
+| 2020-07-05 | 509.695007 | 52.209000 |    0.668 |
+| 2020-07-17 | 506.665985 | 51.771999 |    0.713 |
+| 2020-07-29 | 502.263000 | 51.325001 |    0.714 |
+* Quickstart
 :PROPERTIES:
 :header-args:jupyter-python+: :kernel PROMICE :session PROMICE :exports both :results raw drawer
 :END:
 
-*** Ice Discharge
+** Ice Discharge
 
 #+BEGIN_SRC jupyter-python
 from promice import ice_discharge as ice
@@ -23,7 +73,7 @@ ds.to_dataframe().tail()
 | 2020-07-17 00:00:00 |   506.666 | 51.772 |    0.713 |
 | 2020-07-29 00:00:00 |   502.263 | 51.325 |    0.714 |
 
-**** Find the 2020 discharge for the top 3 discharging glaciers
+*** Find the 2020 discharge for the top 3 discharging glaciers
 
 Load an =xarray= dataset of all discharge
 
@@ -122,7 +172,7 @@ df_3[df_3.index.year >= 2020].resample('M').mean()
 | 2020-07-31 00:00:00 |         39.2283 |                 26.407 |          30.2797 |
 
 
-*** Watson River discharge
+** Watson River discharge
 #+BEGIN_SRC jupyter-python
 from promice import watson
 df = watson.discharge()
@@ -150,8 +200,3 @@ df['2012-06-01':'2012-06-15']
 
 
 
-** Installation
-
-#+BEGIN_SRC bash :results verbatim
-pip install git+https://gitlab.com/mankoff/PROMICE.git
-#+END_SRC

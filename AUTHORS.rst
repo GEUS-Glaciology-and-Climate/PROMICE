@@ -2,4 +2,4 @@
 Contributors
 ============
 
-* Kenneth D. Mankoff <mankoff@gmail.com>
+* Kenneth D. Mankoff <kdm@geus.dk>
