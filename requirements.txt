@@ -22,5 +22,5 @@ geopandas==0.8.1
 xarray==0.16.0
 fsspec==0.8.0
 requests==2.24.0
-aiohttp==3.6.2
+aiohttp==3.7.4
 h5netcdf==0.8.1
